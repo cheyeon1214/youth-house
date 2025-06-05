@@ -2,22 +2,22 @@ package com.project.util;
 
 
 public class Mydate {
-	int yaer;
+	int year;
 	int month;
 	int day;
 	
 	public Mydate() {}
-	public Mydate(int yaer, int month, int day) {
+	public Mydate(int year, int month, int day) {
 		super();
-		this.yaer = yaer;
+		this.year = year;
 		this.month = month;
 		this.day = day;
 	}
 	public int getYaer() {
-		return yaer;
+		return year;
 	}
-	public void setYaer(int yaer) {
-		this.yaer = yaer;
+	public void setYaer(int year) {
+		this.year = year;
 	}
 	public int getMonth() {
 		return month;
@@ -33,7 +33,7 @@ public class Mydate {
 	}
 	@Override
 	public String toString() {
-		return "Mydate [yaer=" + yaer + ", month=" + month + ", day=" + day + "]";
+		return "Mydate [yaer=" + year + ", month=" + month + ", day=" + day + "]";
 	}
 	
 	

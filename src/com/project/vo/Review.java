@@ -3,10 +3,10 @@ package com.project.vo;
 public class Review {
 	private String reviewID; //review_id
 	private String text;
-	private String starRating; //star_rating
+	private int starRating; //star_rating
 	private String reservationID;
 	public Review() {}
-	public Review(String reviewID, String text, String starRating, String reservationID) {
+	public Review(String reviewID, String text, int starRating, String reservationID) {
 		super();
 		this.reviewID = reviewID;
 		this.text = text;
@@ -22,10 +22,10 @@ public class Review {
 	public void setText(String text) {
 		this.text = text;
 	}
-	public String getStarRating() {
+	public int getStarRating() {
 		return starRating;
 	}
-	public void setStarRating(String starRating) {
+	public void setStarRating(int starRating) {
 		this.starRating = starRating;
 	}
 	public String getReservationID() {

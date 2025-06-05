@@ -8,7 +8,7 @@ import com.project.util.Mydate;
 
 public class Reservation {
 	private String reservationID; //reservatioin_id
-	private int haedCount; //head_count
+	private int headCount; //head_count
 	private double price;
 	private Mydate checkinDate; //checkin_date
 	private Mydate checkoutDate; //checkout_date
@@ -19,11 +19,11 @@ public class Reservation {
 	ArrayList<Review> reviews = new ArrayList<>();
 
 	public Reservation() {}
-	public Reservation(String reservationID, int haedCount, double price, Mydate checkinDate, Mydate checkoutDate,
+	public Reservation(String reservationID, int headCount, double price, Mydate checkinDate, Mydate checkoutDate,
 			PaymentType paymentType, String roomno, String ghcode) {
 		super();
 		this.reservationID = reservationID;
-		this.haedCount = haedCount;
+		this.headCount = headCount;
 		this.price = price;
 		this.checkinDate = checkinDate;
 		this.checkoutDate = checkoutDate;
@@ -37,11 +37,11 @@ public class Reservation {
 	}
 	
 	public int getHaedCount() {
-		return haedCount;
+		return headCount;
 	}
 
-	public void setHaedCount(int haedCount) {
-		this.haedCount = haedCount;
+	public void setHaedCount(int headCount) {
+		this.headCount = headCount;
 	}
 
 	public double getPrice() {
@@ -103,7 +103,7 @@ public class Reservation {
 
 	@Override
 	public String toString() {
-		return "Reservation [reservationID=" + reservationID + ", haedCount=" + haedCount + ", price=" + price
+		return "Reservation [reservationID=" + reservationID + ", haedCount=" + headCount + ", price=" + price
 				+ ", checkinDate=" + checkinDate + ", checkoutDate=" + checkoutDate + ", paymentType=" + paymentType
 				+ ", roomno=" + roomno + ", ghcode=" + ghcode + ", reviews=" + reviews + "]";
 	}
