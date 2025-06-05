@@ -16,6 +16,10 @@ public class Room {
 		this.price = price;
 		this.overview = overview;
 	}
+	public Room(String roomno, int price) {
+		this.roomno = roomno;
+		this.price = price;
+	}
 	public String getRoomno() {
 		return roomno;
 	}

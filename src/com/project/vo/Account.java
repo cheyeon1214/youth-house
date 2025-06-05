@@ -9,6 +9,10 @@ public class Account {
 		this.account = account;
 		this.bankName = bankName;
 	}
+	public Account(String account) {
+		super();
+		this.account = account;
+	}
 	
 	public String getAccount() {
 		return account;

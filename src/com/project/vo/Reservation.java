@@ -1,12 +1,12 @@
 package com.project.vo;
 
-import java.sql.Date;
 import java.util.ArrayList;
 
 import com.project.enums.PaymentType;
 import com.project.util.Mydate;
 
 public class Reservation {
+	private String guest_id; // user_id
 	private String reservationID; //reservatioin_id
 	private int headCount; //head_count
 	private double price;
@@ -20,7 +20,7 @@ public class Reservation {
 
 	public Reservation() {}
 	public Reservation(String reservationID, int headCount, double price, Mydate checkinDate, Mydate checkoutDate,
-			PaymentType paymentType, String roomno, String ghcode) {
+			PaymentType paymentType, String roomno, String ghcode, String guest_id) {
 		super();
 		this.reservationID = reservationID;
 		this.headCount = headCount;
@@ -30,17 +30,34 @@ public class Reservation {
 		this.paymentType = paymentType;
 		this.roomno = roomno;
 		this.ghcode = ghcode;
+		this.guest_id = guest_id;
+	}
+	public Reservation(int headCount, double price, Mydate checkinDate, Mydate checkoutDate,
+			PaymentType paymentType, String roomno, String ghcode, String guest_id) {
+		super();
+		this.headCount = headCount;
+		this.price = price;
+		this.checkinDate = checkinDate;
+		this.checkoutDate = checkoutDate;
+		this.paymentType = paymentType;
+		this.roomno = roomno;
+		this.ghcode = ghcode;
+		this.guest_id = guest_id;
 	}
 
+	public String getGuestId() {
+		return guest_id;
+	}
+	
 	public String getReservationID() {
 		return reservationID;
 	}
 	
-	public int getHaedCount() {
+	public int getHeadCount() {
 		return headCount;
 	}
 
-	public void setHaedCount(int headCount) {
+	public void setHeadCount(int headCount) {
 		this.headCount = headCount;
 	}
 

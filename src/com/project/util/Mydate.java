@@ -1,5 +1,6 @@
 package com.project.util;
 
+import java.time.LocalDate;
 
 public class Mydate {
 	int year;
@@ -13,10 +14,10 @@ public class Mydate {
 		this.month = month;
 		this.day = day;
 	}
-	public int getYaer() {
+	public int getYear() {
 		return year;
 	}
-	public void setYaer(int year) {
+	public void setYear(int year) {
 		this.year = year;
 	}
 	public int getMonth() {
@@ -33,9 +34,11 @@ public class Mydate {
 	}
 	@Override
 	public String toString() {
-		return "Mydate [yaer=" + year + ", month=" + month + ", day=" + day + "]";
+		return "Mydate [year=" + year + ", month=" + month + ", day=" + day + "]";
 	}
-	
+	public LocalDate toLocalDate() {
+	    return LocalDate.of(this.year, this.month, this.day);
+	}
 	
 	
 }

@@ -6,12 +6,13 @@ public class Host {
 	private String hostID;
 	private String pass;
 	private String name;
-	private String account;
+	//private String account;
 	
 	ArrayList<GuestHouse> ghs = new ArrayList<>();
+	Account account = null;
 
 	public Host() {}
-	public Host(String hostID, String pass, String name, String account) {
+	public Host(String hostID, String pass, String name, Account account) {
 		super();
 		this.hostID = hostID;
 		this.pass = pass;
@@ -39,11 +40,11 @@ public class Host {
 		this.name = name;
 	}
 
-	public String getAccount() {
+	public Account getAccount() {
 		return account;
 	}
 
-	public void setAccount(String account) {
+	public void setAccount(Account account) {
 		this.account = account;
 	}
 

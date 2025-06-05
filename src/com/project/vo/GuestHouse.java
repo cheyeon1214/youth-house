@@ -10,12 +10,30 @@ public class GuestHouse {
 	private String sigungu;
 	private String dong;
 	private String detailAddress;
+	private String hostID;
+	//private Mydate recordDate;
 	
 	ArrayList<Room> rooms = new ArrayList<>();
 
-	public GuestHouse() {}
+	GuestHouse(){}
+	public GuestHouse(String ghcode, String name) {
+		this.ghcode = ghcode;
+		this.name = name;
+	}
+	public GuestHouse(String businessNum, String name, String sido, String sigungu, String dong,
+			String detailAddress, String hostID) {
+		super();
+		this.businessNum = businessNum;
+		this.name = name;
+		this.sido = sido;
+		this.sigungu = sigungu;
+		this.dong = dong;
+		this.detailAddress = detailAddress;
+		this.hostID = hostID;
+		//this.recordDate = recordDate;
+	}
 	public GuestHouse(String ghcode, String businessNum, String name, String sido, String sigungu, String dong,
-			String detailAddress) {
+			String detailAddress, String hostID) {
 		super();
 		this.ghcode = ghcode;
 		this.businessNum = businessNum;
@@ -24,6 +42,21 @@ public class GuestHouse {
 		this.sigungu = sigungu;
 		this.dong = dong;
 		this.detailAddress = detailAddress;
+		this.hostID = hostID;
+		//this.recordDate = recordDate;
+	}
+	
+//	public Mydate getRecordDate() {
+//		return recordDate;
+//	}
+//	public void setRecordDate(Mydate recordDate) {
+//		this.recordDate = recordDate;
+//	}
+	public String getHostID() {
+		return hostID;
+	}
+	public void setHostId(String hostID) {
+		this.hostID = hostID;
 	}
 	public String getGhcode() {
 		return ghcode;
