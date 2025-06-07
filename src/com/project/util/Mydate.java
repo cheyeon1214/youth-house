@@ -34,7 +34,7 @@ public class Mydate {
 	}
 	@Override
 	public String toString() {
-		return "Mydate [year=" + year + ", month=" + month + ", day=" + day + "]";
+		return "[" + year + "년"+", " + month + "월"+"," + day + "일]";
 	}
 	public LocalDate toLocalDate() {
 	    return LocalDate.of(this.year, this.month, this.day);

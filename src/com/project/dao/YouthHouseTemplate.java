@@ -31,9 +31,10 @@ public interface YouthHouseTemplate {
 	public ArrayList<Reservation> getAllReservations(String ghcode, int num) throws DMLException; //혀니혀니
 	ArrayList<GuestHouse> getAllGHs(String hostID) throws DMLException; //라니라니
 	
+	boolean isPossibleReservation(String ghcode, String roomno, Mydate checkIn, Mydate checkOut, int num) throws RecordNotFoundException, DMLException;
 	Reservation getAReservation(String reserID) throws DMLException;
 	void updateReservation(String reservationID, Mydate startDate, Mydate endDate) throws DMLException, RecordNotFoundException; //여리여리, 채니채니
-	void updateReservation(String reservationID, String roomno, int headCount); //여리여리, 채니채니 
+	void updateReservatioin(String reservationID, String roomno, int headCount) throws DMLException, RecordNotFoundException; //여리여리, 채니채니 
 	
 	void deleteReservation(String reservationID) throws DMLException, RecordNotFoundException; //혀니혀니
 	void updateUser(Guest guest) throws DMLException,RecordNotFoundException; //혀니혀니 
@@ -44,10 +45,10 @@ public interface YouthHouseTemplate {
 	void depositYouthCard(String id, double price) throws DMLException, RecordNotFoundException; //혀니혀니
 	
 	ArrayList<GuestHouse> sortGHsByCount(String dong) throws DMLException ; //혀니혀니
-	HashMap<GuestHouse, Double> sortGHsByStar(String sigungu, String dong) throws DMLException; //채니채니
-	HashMap<GuestHouse,Room>  sortGHs(int min, int max) throws DMLException,InvalidInputException; //사잇값 라니라니
-	ArrayList<GuestHouse> sortGHs(java.sql.Date recordDate ,int num) throws DMLException; //num개 최신 게하 혀니혀니
-	ArrayList<GuestHouse> sortGHs(); //추천순 여리여리 
+	ArrayList<GuestHouse> sortGHsByStar(String sigungu, String dong) throws DMLException; //채니채니
+	ArrayList<GuestHouse>  sortGHs(int min, int max) throws DMLException,InvalidInputException; //사잇값 라니라니
+	ArrayList<GuestHouse> sortGHs(int limit) throws DMLException; //num개 최신 게하 혀니혀니
+	ArrayList<GuestHouse>sortGHs() throws DMLException; //추천순 여리여리 
 	
 	void writeReview(Review review) throws DMLException; //여리여리
 	
@@ -56,7 +57,7 @@ public interface YouthHouseTemplate {
 	void addGH(GuestHouse gh) throws DMLException; //채니채니 
 	
 	public void deleteGH(String ghcode)throws DMLException,RecordNotFoundException; //관리자꺼 라니라니
-	 void deleteRoom(String ghcode, String roomno) throws RecordNotFoundException,DMLException; //혀니혀니 
+	void deleteRoom(String ghcode, String roomno) throws RecordNotFoundException,DMLException; //혀니혀니 
 	void addRoom(String ghcode, Room room) throws DMLException; //여리여리
 	void updateRoom(String ghcode, String roomno, int capacity) throws RecordNotFoundException, DMLException; //채니채니 
 	void updateRoom(String ghcode, String roomno, String gender)throws DMLException,RecordNotFoundException; //라니라니
