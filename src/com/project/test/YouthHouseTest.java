@@ -17,6 +17,7 @@ import com.project.vo.Guest;
 import com.project.vo.GuestHouse;
 import com.project.vo.Host;
 import com.project.vo.Reservation;
+import com.project.vo.Review;
 import com.project.vo.Room;
 import com.project.dao.YouthHouseTemplate;
 import com.project.dao.impl.YouthHouseImpl;
@@ -128,21 +129,22 @@ public class YouthHouseTest {
 		} catch (RecordNotFoundException e) {
 			System.out.println(e.getMessage());
 			System.out.println("메인 화면으로 돌아갑니다");
-			return;
+			return ;
 		} catch (DMLException e) {
 			System.out.println(e.getMessage());
 		}
 		boolean flag = true;
 		while (flag) {
 			System.out.println("✨ 청춘 게스트하우스에 오신 걸 환영합니다! ✨  \n"
-					+ "      codus님, 반가워요! 😊  \n"
+					+ "      "+g.getName()+"님, 반가워요! 😊  \n"
 					+ "🏡 원하는 숙소를 골라 편하게 예약하세요!\n\n"
 					+ "1. 예약 내역 확인\n"
 					+ "2. 게스트하우스 목록 확인\n" 
 					+ "3. 계좌 추가\n" 
 					+ "4. 예치금 입금\n" 
 					+ "5. 회원 정보 변경\n" 
-					+ "6. 메인 화면으로\n");
+					+ "6. 완료된 예약 내역\n"
+					+ "7. 메인 화면으로\n");
 			switch (sc.next()) {
 			case "1":
 				showMyReserve(sc, yh, g);
@@ -160,6 +162,9 @@ public class YouthHouseTest {
 				updateMyInfo(sc, yh, g);
 				break;
 			case "6":
+				showMyClosedReserve(sc, yh, g);
+				break;
+			case "7":
 				flag = false;
 				break;
 			default:
@@ -167,6 +172,47 @@ public class YouthHouseTest {
 
 			}
 
+		}
+	}
+
+	private static void showMyClosedReserve(Scanner sc, YouthHouseImpl yh, Guest g) {
+		ArrayList<Reservation> reservs = null;
+		try {
+			reservs = yh.getClosedReservations(g);
+		} catch (DMLException e) {
+			System.out.println(e.getMessage());
+		}
+		if(reservs == null) {
+			System.out.println("회원님~ 지난 예약이 없습니다! ");
+		}else {
+			int i = 1;
+			for(Reservation r : reservs) {
+				System.out.println((i++)+ ". " + r.getGhcode()+" | "+r.getRoomno()+" | "
+						+r.getHeadCount()+"명 | "+r.getCheckinDate()+" ~ "+r.getCheckoutDate());
+				if(r.getReviews().getReviewID() == null) {
+					System.out.print(" -> 리뷰가 없습니다. \n");
+				}
+				else {
+					System.out.println("리뷰: "+r.getReviews());
+				}
+			}
+			System.out.println("리뷰를 작성하실 번호를 입력해주세요.(뒤로가기 -1) 👉 ");
+			int ans = sc.nextInt();
+			if(ans < 0 || ans > reservs.size()+1) {
+				System.out.println("돌아갑니다.");
+				return;
+			}else {
+				System.out.println("리뷰 별점(1~5): ");
+				int star = sc.nextInt();
+				System.out.println("리뷰 내용: ");
+				String text = sc.next();
+				
+				try {
+					yh.writeReview(new Review(text, star, reservs.get(ans-1).getReservationID()), g, reservs.get(ans-1) );
+				} catch (DMLException e) {
+					System.out.println(e.getMessage());
+				}
+			}
 		}
 	}
 
@@ -430,19 +476,14 @@ public class YouthHouseTest {
 		            //target.setCheckinDate(new Mydate(y1, m1, d1));
 		            //target.setCheckoutDate(new Mydate(y2, m2, d2));
 		            try {
-						yh.updateReservation(target.getReservationID(), new Mydate(y1, m1, d1), new Mydate(y2, m2, d2));
+						yh.updateReservation(target, new Mydate(y1, m1, d1), new Mydate(y2, m2, d2), g.getGender());
 					} catch (RecordNotFoundException e) {
 						System.out.println(e.getMessage());
 					}
 		            
 	        	} else if(updateType.equals("2")) {
 	        	    try {
-	        	        System.out.println("\n--- 변경 가능한 방 목록 ---");
-	        	        ArrayList<Room> rooms = yh.getAllRooms(target.getGhcode());
-	        	        for (int i = 0; i < rooms.size(); i++) {
-	        	            Room r = rooms.get(i);
-	        	            System.out.printf("%d. 방번호: %s | 인원: %d명 | 가격: %.0f원\n", i + 1, r.getRoomno(), r.getCapacity(), r.getPrice());
-	        	        }
+	        	    	yh.checkRoom(target.getGhcode(), target.getCheckinDate(), target.getCheckoutDate());
 
 	        	        System.out.print("\n변경할 방 번호(roomno)를 입력하세요: \n");
 	        	        String newRoomno = sc.next();
@@ -450,19 +491,9 @@ public class YouthHouseTest {
 	        	        System.out.print("변경할 인원수를 입력하세요: \n");
 	        	        int newHead = sc.nextInt();
 
-	        	        boolean canBook = yh.isPossibleReservation(
-	        	            target.getGhcode(), newRoomno, 
-	        	            target.getCheckinDate(), target.getCheckoutDate(), newHead
-	        	        );
-
-	        	        if (!canBook) {
-	        	            System.out.println("⚠️ 선택하신 방은 해당 기간 동안 인원이 초과되어 예약이 불가능합니다.");
-	        	            return;
-	        	        }
-
 	        	        // 실제 업데이트
 	        	        yh.updateReservatioin(target.getReservationID(), newRoomno, newHead);
-	        	        System.out.println("✅ 예약 정보가 성공적으로 변경되었습니다.");
+	        	       //System.out.println("✅ 예약 정보가 성공적으로 변경되었습니다.");
 
 	        	    } catch (DMLException | RecordNotFoundException e) {
 	        	        System.out.println("변경 중 오류 발생: " + e.getMessage());
@@ -582,10 +613,10 @@ public class YouthHouseTest {
                 );
 
                 try {
-                    yh.addReservation(res);
+                    yh.addReservation(res, g.getGender());
                     System.out.println("예약이 완료되었습니다.");
-                } catch (PaymentException e) {
-                    System.out.println("결제 실패: " + e.getMessage());
+                } catch (Exception e) {
+                    System.out.println("예약 실패: " + e.getMessage());
                 }
             } catch (DMLException e) {
                 System.out.println(e.getMessage());
@@ -984,9 +1015,6 @@ public class YouthHouseTest {
 				System.out.println("잘못된 입력입니다. 다시 선택해주세요.");
 				break;
 			}
-
 		}
-
 	}
-
 }

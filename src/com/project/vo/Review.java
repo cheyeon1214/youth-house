@@ -13,6 +13,13 @@ public class Review {
 		this.starRating = starRating;
 		this.reservationID = reservationID;
 	}
+	public Review(String text, int starRating, String reservationID) {
+		super();
+		this.reviewID = reviewID;
+		this.text = text;
+		this.starRating = starRating;
+		this.reservationID = reservationID;
+	}
 	public String getReviewID() {
 		return reviewID;
 	}

@@ -1,5 +1,6 @@
 package com.project.dao;
 
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -24,16 +25,16 @@ public interface YouthHouseTemplate {
 	void addUser(Host host) throws DMLException, DuplicateUserException; //혀니혀니
 	Guest loginGuest(String id, String pass) throws RecordNotFoundException, DMLException; //여리여리
 	Host loginHost(String id, String pass) throws DMLException,RecordNotFoundException; //관리자 전화 승인 채니채니 
+	ArrayList<Reservation> getClosedReservations(Guest guest) throws DMLException;
 	
-	void addReservation(Reservation reservation) throws DMLException, PaymentException; //채니채니 
-	public ArrayList<Reservation> getAllReservations(String guestID) throws DMLException; //라니라니
+	void addReservation(Reservation reservation, String gender) throws DMLException, InvalidInputException, RecordNotFoundException; //채니채니 
+	ArrayList<Reservation> getAllReservations(String guestID) throws DMLException; //라니라니
 	ArrayList<Reservation> getAllReservations(String ghcode, Mydate date) throws DMLException; //여리여리
-	public ArrayList<Reservation> getAllReservations(String ghcode, int num) throws DMLException; //혀니혀니
+	ArrayList<Reservation> getAllReservations(String ghcode, int num) throws DMLException; //혀니혀니
 	ArrayList<GuestHouse> getAllGHs(String hostID) throws DMLException; //라니라니
 	
-	boolean isPossibleReservation(String ghcode, String roomno, Mydate checkIn, Mydate checkOut, int num) throws RecordNotFoundException, DMLException;
 	Reservation getAReservation(String reserID) throws DMLException;
-	void updateReservation(String reservationID, Mydate startDate, Mydate endDate) throws DMLException, RecordNotFoundException; //여리여리, 채니채니
+	void updateReservation(Reservation reservation, Mydate startDate, Mydate endDate, String gender) throws DMLException, RecordNotFoundException; //여리여리, 채니채니
 	void updateReservatioin(String reservationID, String roomno, int headCount) throws DMLException, RecordNotFoundException; //여리여리, 채니채니 
 	
 	void deleteReservation(String reservationID) throws DMLException, RecordNotFoundException; //혀니혀니
@@ -50,7 +51,7 @@ public interface YouthHouseTemplate {
 	ArrayList<GuestHouse> sortGHs(int limit) throws DMLException; //num개 최신 게하 혀니혀니
 	ArrayList<GuestHouse>sortGHs() throws DMLException; //추천순 여리여리 
 	
-	void writeReview(Review review) throws DMLException; //여리여리
+	void writeReview(Review review, Guest guest, Reservation reservation) throws DMLException; //여리여리
 	
 	GuestHouse getGH(String ghcode) throws DMLException; //라니라니
 	
@@ -64,7 +65,7 @@ public interface YouthHouseTemplate {
 	
 	double getRevenue(int year, int month, String ghcode) throws InvalidInputException, DMLException; //채니 
 	double getRevenue(String ghcode, int year) throws DMLException; // 여리 
-	double getRevenue(int year, int month, int day) throws DMLException; //혀니 
+	double getRevenue(int year, int month, int day, String ghcode) throws DMLException; //혀니 
 	double getRevenue(int year, String quater) throws DMLException; //라니라니
 	double getRevenue(int year, String quater, String ghcode) throws DMLException;
 	

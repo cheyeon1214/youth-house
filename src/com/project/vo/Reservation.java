@@ -16,7 +16,8 @@ public class Reservation {
 	private String roomno;
 	private String ghcode;
 	
-	ArrayList<Review> reviews = new ArrayList<>();
+	//ArrayList<Review> reviews = new ArrayList<>();
+	Review review = new Review();
 
 	public Reservation() {}
 	public Reservation(String reservationID, int headCount, double price, Mydate checkinDate, Mydate checkoutDate,
@@ -110,19 +111,19 @@ public class Reservation {
 //		this.ghcode = ghcode;
 //	}
 
-	public ArrayList<Review> getReviews() {
-		return reviews;
+	public Review getReviews() {
+		return review;
 	}
 
-	public void setReviews(ArrayList<Review> reviews) {
-		this.reviews = reviews;
+	public void setReviews(Review review) {
+		this.review = review;
 	}
 
 	@Override
 	public String toString() {
 		return "Reservation [reservationID=" + reservationID + ", haedCount=" + headCount + ", price=" + price
 				+ ", checkinDate=" + checkinDate + ", checkoutDate=" + checkoutDate + ", paymentType=" + paymentType
-				+ ", roomno=" + roomno + ", ghcode=" + ghcode + ", reviews=" + reviews + "]";
+				+ ", roomno=" + roomno + ", ghcode=" + ghcode + ", reviews=" + review + "]";
 	}
 	
 
