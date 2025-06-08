@@ -959,11 +959,6 @@ public class YouthHouseImpl implements YouthHouseTemplate {
    
    @Override
    public void writeReview(Review review, Guest guest, Reservation reservation) throws DMLException {
-      /*
-       * public Review(String reviewID, String text, String starRating, String
-       * reservationID) { super(); this.reviewID = reviewID; this.text = text;
-       * this.starRating = starRating; this.reservationID = reservationID; }
-       */
       String query = "INSERT INTO review (text, star_rating, user_id, reservation_id, roomno, ghcode) VALUES (?,?,?,?,?,?)";
       try (Connection conn = getConnect(); PreparedStatement ps = conn.prepareStatement(query);) {
          ps.setString(1, review.getText());
