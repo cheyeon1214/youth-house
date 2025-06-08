@@ -1,6 +1,5 @@
 package com.project.test;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
@@ -9,7 +8,6 @@ import java.util.Scanner;
 import com.project.exception.DMLException;
 import com.project.exception.DuplicateUserException;
 import com.project.exception.InvalidInputException;
-import com.project.exception.PaymentException;
 import com.project.exception.RecordNotFoundException;
 import com.project.util.Mydate;
 import com.project.vo.Account;
@@ -19,7 +17,6 @@ import com.project.vo.Host;
 import com.project.vo.Reservation;
 import com.project.vo.Review;
 import com.project.vo.Room;
-import com.project.dao.YouthHouseTemplate;
 import com.project.dao.impl.YouthHouseImpl;
 import com.project.enums.PaymentType;
 
@@ -94,7 +91,24 @@ public class YouthHouseTest {
 						System.out.println(e.getMessage());
 					}
 				} else if (signInType == 2) {
-					// 호스트 회원가입 필요
+					System.out.println("아이디 입력: ");
+					String hostID = sc.next();
+					System.out.println("비밀번호 입력: ");
+					String pass = sc.next();
+					System.out.println("이름 입력: ");
+					String name = sc.next();
+					System.out.println("계좌번호 입력: ");
+					String account = sc.next();
+					System.out.println("은행 입력: ");
+					String bank = sc.next();
+					try {
+						service.addUser(new Host(hostID, pass, name, new Account(account, bank)));
+					} catch (DMLException e) {
+						System.out.println(e.getMessage());
+					} catch (DuplicateUserException e) {
+						System.out.println(e.getMessage());
+					}
+					
 				} else {
 					System.out.println("잘못된 입력입니다.");
 				}
@@ -466,38 +480,12 @@ public class YouthHouseTest {
 	        System.out.println("\n1. 예약 수정 / 2. 예약 취소 / [b] 뒤로가기");
 	        String action = sc.next();
 	        if (action.equals("1")) {
-	        	System.out.println("\n1. 날짜 변경 / 2. 방 및 인원수 변경 / [b] 뒤로가기");
-	        	String updateType = sc.next();
-	        	if(updateType.equals("1")) {
-	        		System.out.println("새 체크인 날짜 (yyyy mm dd): ");
-		            int y1 = sc.nextInt(), m1 = sc.nextInt(), d1 = sc.nextInt();
-		            System.out.println("새 체크아웃 날짜 (yyyy mm dd): ");
-		            int y2 = sc.nextInt(), m2 = sc.nextInt(), d2 = sc.nextInt();
-		            //target.setCheckinDate(new Mydate(y1, m1, d1));
-		            //target.setCheckoutDate(new Mydate(y2, m2, d2));
-		            try {
-						yh.updateReservation(target, new Mydate(y1, m1, d1), new Mydate(y2, m2, d2), g.getGender());
-					} catch (RecordNotFoundException e) {
-						System.out.println(e.getMessage());
-					}
-		            
-	        	} else if(updateType.equals("2")) {
-	        	    try {
-	        	    	yh.checkRoom(target.getGhcode(), target.getCheckinDate(), target.getCheckoutDate());
-
-	        	        System.out.print("\n변경할 방 번호(roomno)를 입력하세요: \n");
-	        	        String newRoomno = sc.next();
-
-	        	        System.out.print("변경할 인원수를 입력하세요: \n");
-	        	        int newHead = sc.nextInt();
-
-	        	        // 실제 업데이트
-	        	        yh.updateReservatioin(target.getReservationID(), newRoomno, newHead);
-	        	       //System.out.println("✅ 예약 정보가 성공적으로 변경되었습니다.");
-
-	        	    } catch (DMLException | RecordNotFoundException e) {
-	        	        System.out.println("변경 중 오류 발생: " + e.getMessage());
-	        	    }
+	        	try{
+	        		//scanner추가하면 끝
+	        		yh.updateReservation(target, null, null, cmd, sel, action);
+	        	
+	        	}catch(Exception e){
+	        		System.out.println(e.getMessage());
 	        	}
 
 	        } else if (action.equals("2")) {
@@ -681,7 +669,11 @@ public class YouthHouseTest {
 					String ghcode = sc.nextLine();
 					GuestHouse findGH = service.getGH(ghcode);
 					System.out.println(findGH.getGhcode() + ", " + findGH.getName() + " 삭제를 요청하였습니다. 담당 직원이 연락드리겠습니다.");
-					System.out.println(findGH.getGhcode() + ", " + findGH.getName() + " 삭제 처리가 완료되었습니다.");
+					service.startRefresh2(host);
+					Thread stopper = new Thread(new stopRefresh(service));
+					stopper.start();
+					
+					//System.out.println(findGH.getGhcode() + ", " + findGH.getName() + " 삭제 처리가 완료되었습니다.");
 					break;
 
 				} catch (Exception e) {
@@ -985,7 +977,6 @@ public class YouthHouseTest {
 					int day = Integer.parseInt(parts[2]);
 					Mydate targetDate = new Mydate(year, month, day);
 
-					// 방 + 해당 날짜 기준 예약 인원 조회
 					HashMap<Room, Integer> roomStatusMap = service.getCheckCountRoom(guesthouse.getGhcode(),
 							targetDate);
 
@@ -1018,3 +1009,24 @@ public class YouthHouseTest {
 		}
 	}
 }
+
+class stopRefresh implements Runnable {
+    private final YouthHouseImpl yhdao;
+
+    public stopRefresh(YouthHouseImpl yhdao) {
+        this.yhdao = yhdao;
+    }
+
+    @Override
+    public void run() {
+        try {
+            Thread.sleep(30_000);
+            yhdao.stopRefresh();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+
+

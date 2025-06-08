@@ -105,8 +105,8 @@ public class GuestHouse {
 	}
 	@Override
 	public String toString() {
-		return "GuestHouse [ghcode=" + ghcode + ", businessNum=" + businessNum + ", name=" + name + ", sido=" + sido
-				+ ", sigungu=" + sigungu + ", dong=" + dong + ", detailAddress=" + detailAddress + ", rooms=" + rooms
+		return "게스트하우스 [지점코드=" + ghcode + ", 사업자번호=" + businessNum + ", 게스트하우스 이름=" + name + ", 시/도=" + sido
+				+ ", 시/군/구=" + sigungu + ", 동=" + dong + ", 상세 주소=" + detailAddress + ", 방 리스트=" + rooms
 				+ "]";
 	}
 	
