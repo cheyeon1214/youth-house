@@ -26,6 +26,17 @@ public class Guest {
 		this.gender = gender;
 		this.depositeAccount = depositeAccount;
 	}
+	public Guest( String id, String name, String pass, String phone, String gender,
+			String depositeAccount, double depositeBalance) {
+		super();
+		this.id = id;
+		this.name = name;
+		this.pass = pass;
+		this.phone = phone;
+		this.gender = gender;
+		this.depositeAccount = depositeAccount;
+		this.depositeBalance = depositeBalance;
+	}
 	public String getId() {
 		return id;
 	}

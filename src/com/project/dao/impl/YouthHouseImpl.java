@@ -16,8 +16,8 @@ import java.util.concurrent.TimeUnit;
 
 import com.project.config.ServerInfo;
 import com.project.dao.YouthHouseTemplate;
-import com.project.util.GuestHouseScore;
-import com.project.util.RawGHData;
+import com.project.dto.GuestHouseScore;
+import com.project.dto.RawGHData;
 import com.project.enums.PaymentType;
 import com.project.exception.DMLException;
 import com.project.exception.DuplicateUserException;
@@ -173,7 +173,7 @@ public class YouthHouseImpl implements YouthHouseTemplate {
 
    @Override
    public Guest loginGuest(String id, String pass) throws RecordNotFoundException, DMLException {
-      String query = "SELECT id,name,pass,phonenumber,gender,deposite_account FROM guest WHERE id = ? and pass = ?";
+      String query = "SELECT id,name,pass,phonenumber,gender,deposite_account,deposite_balance FROM guest WHERE id = ? and pass = ?";
       Guest guest = null;
       ResultSet rs = null;
       try (Connection conn = getConnect(); PreparedStatement ps = conn.prepareStatement(query);) {
@@ -182,7 +182,7 @@ public class YouthHouseImpl implements YouthHouseTemplate {
          rs = ps.executeQuery();
          if (rs.next()) {
             guest = new Guest(rs.getString("id"), rs.getString("name"), rs.getString("pass"),
-                  rs.getString("phonenumber"), rs.getString("gender"), rs.getString("deposite_account"));
+                  rs.getString("phonenumber"), rs.getString("gender"), rs.getString("deposite_account"),rs.getDouble("deposite_balance"));
          }
 
       } catch (SQLException e) {
@@ -403,7 +403,7 @@ public class YouthHouseImpl implements YouthHouseTemplate {
 	      }
 
 	      if (targetRoom == null) {
-	         throw new RecordNotFoundException("해당 방을 찾을 수 없습니다."); // 방 정보 없으면 예약 불가
+	         throw new RecordNotFoundException("해당 방을 찾을 수 없습니다.");
 	      }
 
 	      String rGender = targetRoom.getGender();
@@ -416,19 +416,20 @@ public class YouthHouseImpl implements YouthHouseTemplate {
 	      LocalDate start = LocalDate.of(checkIn.getYear(), checkIn.getMonth(), checkIn.getDay());
 	      LocalDate end = LocalDate.of(checkOut.getYear(), checkOut.getMonth(), checkOut.getDay());
 
-	      for (LocalDate date = start; date.isBefore(end); date = date.plusDays(1)) {
+	      for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
 	         Mydate currentDate = new Mydate(date.getYear(), date.getMonthValue(), date.getDayOfMonth());
 
-	         ArrayList<Reservation> reservations = getAllReservations(ghcode, currentDate); 
+	         ArrayList<Reservation> reservations = getAllReservations(conn, ghcode, currentDate); 
 	         int totalReserved = 0;
 
 	         for (Reservation r : reservations) {
-	            if (r.getRoomno().equals(roomno)) {
+	            if (r.getRoomno().equals(roomno) && r.getGhcode().equals(ghcode)) {
 	               totalReserved += r.getHeadCount();
 	            }
 	         }
 
 	         if (totalReserved + num > capacity) {
+	        	System.out.println("인원수를 초과하였습니다.");
 	            return false; 
 	         }
 	      }
@@ -477,6 +478,40 @@ public class YouthHouseImpl implements YouthHouseTemplate {
       return currMap;
    }
 
+   private ArrayList<Reservation> getAllReservations(Connection conn, String ghcode, Mydate date) throws DMLException {
+      String query = "SELECT * FROM reservation WHERE ghcode = ? AND ? BETWEEN checkin_date AND checkout_date";
+      ArrayList<Reservation> reservations = new ArrayList<Reservation>();
+      ResultSet rs = null;
+      try(PreparedStatement ps = conn.prepareStatement(query); ) {
+         ps.setString(1, ghcode);
+         String dateFormat = date.getYear() + "-" + date.getMonth() + "-" + date.getDay();
+         ps.setString(2, dateFormat);
+         rs = ps.executeQuery();
+         while(rs.next()) {
+            reservations.add(new Reservation(
+                  rs.getString("reservation_id"),
+                   rs.getInt("head_count"),
+                   rs.getDouble("price"),
+                   new Mydate(rs.getDate("checkin_date").toLocalDate().getYear(),
+                              rs.getDate("checkin_date").toLocalDate().getMonthValue(),
+                              rs.getDate("checkin_date").toLocalDate().getDayOfMonth()),
+
+                   new Mydate(rs.getDate("checkout_date").toLocalDate().getYear(),
+                              rs.getDate("checkout_date").toLocalDate().getMonthValue(),
+                              rs.getDate("checkout_date").toLocalDate().getDayOfMonth()),
+                   PaymentType.valueOf(rs.getString("payment_type")), 
+                   rs.getString("roomno"),
+                   rs.getString("ghcode"), rs.getString("user_id")
+                  ));
+                        
+         } 
+         
+      } catch(SQLException e) {
+         throw new DMLException("예약하는 도중 오류가 발생하였습니다.1");
+      }
+      return reservations;
+   }
+   
    @Override
    public ArrayList<Reservation> getAllReservations(String ghcode, Mydate date) throws DMLException {
       String query = "SELECT * FROM reservation WHERE ghcode = ? AND ? BETWEEN checkin_date AND checkout_date";
@@ -597,40 +632,54 @@ public class YouthHouseImpl implements YouthHouseTemplate {
       return reservation;
    }
 
-   //Mydate startDate, Mydate endDate, String gender, String roomno, int headCount
    @Override
-   public void updateReservation(Reservation reservation,  Mydate startDate, Mydate endDate, String roomno, int headCount, String gender) throws DMLException, RecordNotFoundException {
+    public void updateReservation(Reservation reservation, Mydate startDate, Mydate endDate, String roomno, int headCount, String gender)
+            throws DMLException, RecordNotFoundException {
 
-      String query = "Delete from reservation where reservation_id = ?";
-      String query2 = "Insert into reservation (reservation_id,head_count,price,checkin_date,checkout_date,payment_type,roomno,ghcode,user_id) VALUES (?,?,?,?,?,?,?,?)";
-      try(Connection conn = getConnect(); PreparedStatement ps = conn.prepareStatement(query);) {
-         ps.setString(1, reservation.getReservationID());
-         System.out.println(ps.executeUpdate() +"개 성공");
-         
-         if(isPossibleReservation(conn,reservation.getGhcode(), reservation.getRoomno(), startDate, endDate, headCount,gender)) {
-            reservation.setCheckinDate(startDate);
-            reservation.setCheckoutDate(endDate);
-            reservation.setHeadCount(headCount);
-            reservation.setRoomno(roomno);
-         } 
-         try(PreparedStatement ps2 = conn.prepareStatement(query2);) { 
-         ps2.setString(1, reservation.getReservationID());
-         ps2.setInt(2, reservation.getHeadCount());
-         ps2.setDouble(3, reservation.getPrice());
-         String startStr = startDate.getYear() + "-" + startDate.getMonth() + "-" + startDate.getDay();
-         java.sql.Date startSqlDate = java.sql.Date.valueOf(startStr);
-         ps2.setDate(4, startSqlDate);
-         String endStr = endDate.getYear() + "-" + endDate.getMonth() + "-" + endDate.getDay();
-         java.sql.Date endSqlDate = java.sql.Date.valueOf(endStr);
-         ps2.setDate(5, endSqlDate);
-         ps2.setString(6, reservation.getPaymentType().toString());
-         ps2.setString(7, reservation.getRoomno());
-         ps2.setString(8,reservation.getGuestId());
+       String deleteQuery = "DELETE FROM reservation WHERE reservation_id = ?";
+       String insertQuery = "INSERT INTO reservation (reservation_id, head_count, price, checkin_date, checkout_date, payment_type, roomno, ghcode, user_id) "
+                          + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-         }
-      } catch (SQLException e) {
-         throw new DMLException("예약이 없습니다.");
-      }
+       try (Connection conn = getConnect()) {
+    	   try (PreparedStatement ps = conn.prepareStatement(deleteQuery)) {
+               ps.setString(1, reservation.getReservationID());
+               if (ps.executeUpdate() == 0) {
+                   throw new RecordNotFoundException("해당 예약 ID가 존재하지 않습니다.");
+               }
+           }
+    	   
+    	   
+           if (!isPossibleReservation(conn, reservation.getGhcode(), roomno, startDate, endDate, headCount, gender)) {
+               throw new DMLException("예약할 수 없는 조건입니다.");
+           }
+
+        
+           reservation.setCheckinDate(startDate);
+           reservation.setCheckoutDate(endDate);
+           reservation.setHeadCount(headCount);
+           reservation.setRoomno(roomno);
+
+           try (PreparedStatement ps2 = conn.prepareStatement(insertQuery)) {
+               ps2.setString(1, reservation.getReservationID());
+               ps2.setInt(2, reservation.getHeadCount());
+               ps2.setDouble(3, reservation.getPrice());
+               ps2.setDate(4, java.sql.Date.valueOf(LocalDate.of(startDate.getYear(), startDate.getMonth(), startDate.getDay())));
+               ps2.setDate(5, java.sql.Date.valueOf(LocalDate.of(endDate.getYear(), endDate.getMonth(), endDate.getDay())));
+               ps2.setString(6, reservation.getPaymentType().toString());
+               ps2.setString(7, reservation.getRoomno());
+               ps2.setString(8, reservation.getGhcode());
+               ps2.setString(9, reservation.getGuestId());
+
+               if (ps2.executeUpdate() == 0) {
+            	   System.out.println("수정 못함!");
+               }else {
+            	   System.out.println("수정 완료!");
+               }
+               
+           }
+       } catch (SQLException e) {
+           throw new DMLException("예약 수정 도중 오류 발생: " + e.getMessage());
+       }
    }
 
    @Override
@@ -678,25 +727,16 @@ public class YouthHouseImpl implements YouthHouseTemplate {
       }
    }
 
-   public boolean isExistAccount(String id, Connection conn) throws SQLException {
-      String query = "SELECT user_id from account where user_id=?";
-      PreparedStatement ps = conn.prepareStatement(query);
-      ps.setString(1, id);
-      ResultSet rs = ps.executeQuery();
-      return rs.next();
-   }
-
    @Override
    public void addAccount(String id, String account, String bankName) throws DMLException, DuplicateUserException {// 라니라니
       String query = "INSERT into account(account,bankname,user_id) values (?,?,?)";
       try (Connection conn = getConnect(); PreparedStatement ps = conn.prepareStatement(query)) {
-         if (!isExistAccount(id, conn)) {
+         
             ps.setString(1, account);
             ps.setString(2, bankName);
             ps.setString(3, id);
             System.out.println(ps.executeUpdate() + " 개의 계좌가 등록되었습니다.");
-         } else
-            throw new DuplicateUserException("이미 등록된 계좌입니다.");
+         
       } catch (SQLException e) {
          throw new DMLException("계좌를 등록하던 중 문제가 발생했습니다.");
       }
@@ -738,18 +778,40 @@ public class YouthHouseImpl implements YouthHouseTemplate {
    @Override
    public ArrayList<GuestHouse> sortGHsByCount(String dong) throws DMLException {
       ArrayList<GuestHouse> guestHouses = new ArrayList<GuestHouse>();
-      String query = "SELECT * FROM guesthouse WHERE dong = ? AND ghcode IN "
-            + "(SELECT ghcode FROM reservation WHERE checkin_date BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 YEAR) AND CURDATE() GROUP BY ghcode) "
-            + "ORDER BY (SELECT COUNT(*) FROM reservation WHERE reservation.ghcode = guesthouse.ghcode AND checkin_date BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 YEAR) AND CURDATE()) DESC";
+      String query = 
+    		    "SELECT g.*, COUNT(r.reservation_id) AS reservation_count " +
+    		    "FROM guesthouse g " +
+    		    "LEFT JOIN reservation r ON g.ghcode = r.ghcode " +
+    		    "AND r.checkin_date BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 YEAR) AND CURDATE() " +
+    		    "WHERE g.dong = ? " +
+    		    "GROUP BY g.ghcode " +
+    		    "ORDER BY reservation_count DESC";
+//      String query2 = "SELECT *"
+//      		+ "FROM ("
+//      		+ "    SELECT g.*, COUNT(r.reservation_id) AS reservation_count,"
+//      		+ "        RANK() OVER (ORDER BY COUNT(r.reservation_id) DESC) AS rank"
+//      		+ "    FROM guesthouse g LEFT JOIN reservation r ON g.ghcode = r.ghcode "
+//      		+ "        AND r.checkin_date BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 YEAR) AND CURDATE()"
+//      		+ "    WHERE g.dong = ?"
+//      		+ "    GROUP BY g.ghcode"
+//      		+ ") ranked"
+//      		+ "ORDER BY rank";
       try (Connection conn = getConnect(); PreparedStatement ps = conn.prepareStatement(query)) {
          ps.setString(1, dong);
          try (ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-               GuestHouse guestHouse = new GuestHouse(rs.getString("ghcode"), rs.getString("businessnum"),
-                     rs.getString("name"), rs.getString("sido"), rs.getString("sigungu"), rs.getString("dong"),
-                     rs.getString("detail_address"),rs.getString("host_id"));
-               guestHouses.add(guestHouse);
-            }
+        	 while (rs.next()) {
+                 GuestHouse guestHouse = new GuestHouse(
+                     rs.getString("ghcode"),
+                     rs.getString("businessnum"),
+                     rs.getString("name"),
+                     rs.getString("sido"),
+                     rs.getString("sigungu"),
+                     rs.getString("dong"),
+                     rs.getString("detail_address"),
+                     rs.getString("host_id")
+                 );
+                 guestHouses.add(guestHouse);
+             }
          }
       } catch (SQLException e) {
          throw new DMLException("조회 도중 문제가 생겼습니다.");
@@ -759,27 +821,37 @@ public class YouthHouseImpl implements YouthHouseTemplate {
    
    @Override
    public ArrayList<GuestHouse> sortGHsByStar(String sigungu, String dong) throws DMLException {
-      String query = "SELECT g.ghcode, g.businessnum, g.name, g.sido, g.sigungu, g.dong, g.detail_address, g.host_id, AVG(r.star_rating) AS star\n"
-            + "FROM guesthouse g INNER JOIN review r ON g.ghcode = r.ghcode WHERE g.sigungu = ? AND g.dong = ?\n"
-            + "GROUP BY g.ghcode, g.businessnum, g.name, g.sido, g.sigungu, g.dong, g.detail_address, g.host_id\n"
-            + "ORDER BY star DESC";
-      ArrayList<GuestHouse> arr = new ArrayList<>();
-      try (Connection conn = getConnect(); PreparedStatement ps = conn.prepareStatement(query);) {
-         ps.setString(1, sigungu);
-         ps.setString(2, dong);
-         try (ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-               arr.add(new GuestHouse(rs.getString("g.ghcode"), rs.getString("g.businessnum"),
-                     rs.getString("g.name"), rs.getString("g.sido"), rs.getString("g.sigungu"),
-                     rs.getString("g.dong"), rs.getString("g.detail_address"), rs.getString("g.host_id")));
-            }
+       String query = "SELECT g.ghcode, g.businessnum, g.name, g.sido, g.sigungu, g.dong, g.detail_address, g.host_id, AVG(r.star_rating) AS star "
+                    + "FROM guesthouse g "
+                    + "LEFT JOIN review r ON g.ghcode = r.ghcode "
+                    + "WHERE g.sigungu = ? AND g.dong = ? "
+                    + "GROUP BY g.ghcode, g.businessnum, g.name, g.sido, g.sigungu, g.dong, g.detail_address, g.host_id "
+                    + "ORDER BY star DESC";
 
-         }
-      } catch (SQLException e) {
-         throw new DMLException("문!제!발!생!");
-      }
+       ArrayList<GuestHouse> arr = new ArrayList<>();
+       try (Connection conn = getConnect(); PreparedStatement ps = conn.prepareStatement(query)) {
+           ps.setString(1, sigungu);
+           ps.setString(2, dong);
 
-      return arr;
+           try (ResultSet rs = ps.executeQuery()) {
+               while (rs.next()) {
+                   arr.add(new GuestHouse(
+                       rs.getString("ghcode"),
+                       rs.getString("businessnum"),
+                       rs.getString("name"),
+                       rs.getString("sido"),
+                       rs.getString("sigungu"),
+                       rs.getString("dong"),
+                       rs.getString("detail_address"),
+                       rs.getString("host_id")
+                   ));
+               }
+           }
+       } catch (SQLException e) {
+           throw new DMLException("문!제!발!생!");
+       }
+
+       return arr;
    }
 
    @Override
@@ -1233,6 +1305,25 @@ public class YouthHouseImpl implements YouthHouseTemplate {
          throw new DMLException("정보를 가져오던 중 오류가 발생했습니다~");
       }
       return sales;
+   }
+   
+   @Override
+   public Review getReview(Guest guest, String reservationID) throws DMLException{
+      double sales=0;
+      String query = "SELECT * FROM Review WHERE reservation_id = ? AND user_id = ?";
+      try(Connection conn=getConnect();PreparedStatement ps=conn.prepareStatement(query)){
+         ps.setString(1, reservationID);
+         ps.setString(2, guest.getId());
+         try(ResultSet rs = ps.executeQuery();){
+        	 if(rs.next()) {
+        		 return new Review(rs.getString("text"), rs.getInt("star_rating"), rs.getString("reservation_id"));
+        	 }
+         }
+         
+      } catch (SQLException e) {
+         throw new DMLException("정보를 가져오던 중 오류가 발생했습니다~");
+      }
+      return null;
    }
 
    @Override

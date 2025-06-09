@@ -1,5 +1,6 @@
 package com.project.test;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
@@ -53,7 +54,7 @@ public class YouthHouseTest {
 					try {
 						Host host = service.loginHost(id, password);
 						System.out.println("호스트 로그인 시도: " + id);
-						hostService(service, host); // 호스트 로그인 메소드 호출
+						hostService(service, host); 
 					} catch (Exception e) {
 						System.out.println(e.getMessage());
 					}
@@ -203,11 +204,18 @@ public class YouthHouseTest {
 			for(Reservation r : reservs) {
 				System.out.println((i++)+ ". " + r.getGhcode()+" | "+r.getRoomno()+" | "
 						+r.getHeadCount()+"명 | "+r.getCheckinDate()+" ~ "+r.getCheckoutDate());
-				if(r.getReviews().getReviewID() == null) {
-					System.out.print(" -> 리뷰가 없습니다. \n");
+				Review review = null;
+				try {
+					review = yh.getReview(g, r.getReservationID());
+				} catch (DMLException e) {
+					System.out.println(e.getMessage());
+				}
+				
+				if(review == null) {
+					System.out.print(" 📝 리뷰가 없습니다. \n");
 				}
 				else {
-					System.out.println("리뷰: "+r.getReviews());
+					System.out.println("📝 리뷰: "+review.getText()+ "\n ⭐️리뷰 별점 : "+review.getStarRating()+"/5\n");
 				}
 			}
 			System.out.println("리뷰를 작성하실 번호를 입력해주세요.(뒤로가기 -1) 👉 ");
@@ -244,7 +252,6 @@ public class YouthHouseTest {
 	        System.out.print("새 성별을 입력하세요 (M/F): ");
 	        String gender = sc.next();
 
-	        // Guest 객체 업데이트
 	        g.setName(name);
 	        g.setPass(pass);
 	        g.setPhone(phone);
@@ -260,7 +267,7 @@ public class YouthHouseTest {
 	}
 
 	private static void depositAccount(Scanner sc, YouthHouseImpl yh, Guest g) {
-	    System.out.println("\n💰 예치금 충전 메뉴");
+	    System.out.println("\n💰 예치금 충전(기존: "+g.getDepositeBalance()+")");
 	    System.out.println("──────────────────────────────");
 
 	    try {
@@ -468,6 +475,10 @@ public class YouthHouseTest {
 	        }
 
 	        Reservation target = reservs.get(sel);
+	        if (target.getCheckinDate().toLocalDate().isBefore(LocalDate.now())) {
+	            System.out.println("❌ 이미 체크인 날짜가 지난 예약은 수정할 수 없습니다.");
+	            return;
+	        }
 	        System.out.println("\n--- 예약 상세 정보 ---");
 	        System.out.println("지점코드: " + target.getGhcode());
 	        System.out.println("방번호: " + target.getRoomno());
@@ -481,8 +492,29 @@ public class YouthHouseTest {
 	        String action = sc.next();
 	        if (action.equals("1")) {
 	        	try{
-	        		//scanner추가하면 끝
-	        		yh.updateReservation(target, null, null, cmd, sel, action);
+	        		System.out.println();
+	        		yh.checkRoom(target.getGhcode(), target.getCheckinDate(), target.getCheckoutDate());
+
+        	        System.out.print("\n변경할 방 번호(roomno)를 입력하세요: \n");
+        	        String newRoomno = sc.next();
+
+        	        System.out.print("변경할 인원수를 입력하세요: \n");
+        	        int newHead = sc.nextInt();
+        	        
+        	        System.out.println("날짜도 변경하시겠습니까?(네/아니요)");
+        	        String ans = sc.next();
+        	        Mydate newCheckIn = target.getCheckinDate();
+        	        Mydate newCheckOut = target.getCheckoutDate();
+        	        if(ans.equals("네")) {
+        	        	System.out.println("새 체크인 날짜 (yyyy mm dd): ");
+    		            int y1 = sc.nextInt(), m1 = sc.nextInt(), d1 = sc.nextInt();
+    		            System.out.println("새 체크아웃 날짜 (yyyy mm dd): ");
+    		            int y2 = sc.nextInt(), m2 = sc.nextInt(), d2 = sc.nextInt();
+    		            newCheckIn = new Mydate(y1, m1, d1);
+    		            newCheckOut = new Mydate(y2, m2, d2);
+        	        }
+
+	        		yh.updateReservation(target, newCheckIn, newCheckOut, newRoomno, newHead, g.getGender());
 	        	
 	        	}catch(Exception e){
 	        		System.out.println(e.getMessage());
@@ -562,13 +594,12 @@ public class YouthHouseTest {
                     System.out.println("수용 인원: " + r.getCapacity());
                     System.out.println("가격: " + r.getPrice());
                     System.out.println("설명: " + r.getOverview());
-                    System.out.println("가격: " + r.getPrice());
                     System.out.println("--------------------");
                 }
                 System.out.println("예약할 방 번호(roomno)를 입력하세요:");
                 String roomno = sc.next();
 
-                // 방 정보 가져오기
+                
                 Room selectedRoom = null;
                 for (Room r : rooms) {
                     if (r.getRoomno().equals(roomno)) {

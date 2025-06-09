@@ -1,10 +1,10 @@
-package com.project.util;
+package com.project.dto;
 
 import com.project.vo.GuestHouse;
 
 public class RawGHData {
-    public GuestHouse guesthouse;
-    public double price;
+   public GuestHouse guesthouse;
+   public double price;
    public double rating;
    public double sales;
     

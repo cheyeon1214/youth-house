@@ -1,5 +1,6 @@
 package com.project.dao;
 
+import java.sql.Connection;
 import java.util.ArrayList;
 
 import com.project.exception.DMLException;
@@ -33,6 +34,7 @@ public interface YouthHouseTemplate {
 	Reservation getAReservation(String reserID) throws DMLException;
 	void updateReservation(Reservation reservation,  Mydate startDate, Mydate endDate, String roomno, int headCount, String gender) throws DMLException, RecordNotFoundException; //여리여리, 채니채니 
 	
+	Review getReview(Guest guest, String reservationID) throws DMLException;
 	void deleteReservation(String reservationID) throws DMLException, RecordNotFoundException; //혀니혀니
 	void updateUser(Guest guest) throws DMLException,RecordNotFoundException; //혀니혀니 
 	void updateUser(Host host) throws DMLException,RecordNotFoundException; //라니라니
