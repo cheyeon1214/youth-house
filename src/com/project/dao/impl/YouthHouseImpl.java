@@ -275,12 +275,14 @@ public class YouthHouseImpl implements YouthHouseTemplate,UserService,GuestHouse
 
    @Override
    public void addReservation(Reservation reservation, String gender) throws DMLException, InvalidInputException, RecordNotFoundException {
-      String query = "INSERT INTO reservation (head_count, price, checkin_date, checkout_date, payment_type, roomno, ghcode, user_id) VALUES (?,?,?,?,?,?,?,?)";
+      String query = "INSERT INTO reservation (head_count, price, checkin_date, checkout_date, "
+      		+ "payment_type, roomno, ghcode, user_id) VALUES (?,?,?,?,?,?,?,?)";
       double balance = 0;
       try (Connection conn = getConnect(); PreparedStatement ps = conn.prepareStatement(query);) {
          
 			try {
-				if(!isPossibleReservation(conn, reservation.getGhcode(), reservation.getRoomno(), reservation.getCheckinDate(), reservation.getCheckoutDate(), reservation.getHeadCount(), gender)) {
+				if(!isPossibleReservation(conn, reservation.getGhcode(), reservation.getRoomno(), 
+						reservation.getCheckinDate(), reservation.getCheckoutDate(), reservation.getHeadCount(), gender)) {
 					 throw new InvalidInputException("예약이 불가합니다. 인원수나 성별을 체크해주세요");
 				 }
 			} catch (RecordNotFoundException e) {
@@ -291,7 +293,9 @@ public class YouthHouseImpl implements YouthHouseTemplate,UserService,GuestHouse
 		
          if (reservation.getPaymentType().toString().equals("deposit")) {
             String querySelect = "SELECT deposite_balance FROM guest WHERE id = ?";
-            String queryUpdate = "UPDATE guest SET deposite_balance = deposite_balance - ? WHERE id = ?";
+            String queryUpdate = "UPDATE guest " +
+            	    "SET deposite_balance = deposite_balance - (? * 0.95) " +
+            	    "WHERE id = ? AND deposite_balance >= (? * 0.95)";
             PreparedStatement ps2 = conn.prepareStatement(querySelect);
             ps2.setString(1, reservation.getGuestId());
 
@@ -640,8 +644,9 @@ public class YouthHouseImpl implements YouthHouseTemplate,UserService,GuestHouse
             throws DMLException, RecordNotFoundException {
 
        String deleteQuery = "DELETE FROM reservation WHERE reservation_id = ?";
-       String insertQuery = "INSERT INTO reservation (reservation_id, head_count, price, checkin_date, checkout_date, payment_type, roomno, ghcode, user_id) "
-                          + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+       String insertQuery = "INSERT INTO reservation (reservation_id, head_count, price, checkin_date, checkout_date, "
+       						+ "payment_type, roomno, ghcode, user_id) "
+       						+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
        try (Connection conn = getConnect()) {
     	   try (PreparedStatement ps = conn.prepareStatement(deleteQuery)) {
@@ -650,13 +655,10 @@ public class YouthHouseImpl implements YouthHouseTemplate,UserService,GuestHouse
                    throw new RecordNotFoundException("해당 예약 ID가 존재하지 않습니다.");
                }
            }
-    	   
-    	   
            if (!isPossibleReservation(conn, reservation.getGhcode(), roomno, startDate, endDate, headCount, gender)) {
                throw new DMLException("예약할 수 없는 조건입니다.");
            }
 
-        
            reservation.setCheckinDate(startDate);
            reservation.setCheckoutDate(endDate);
            reservation.setHeadCount(headCount);
@@ -1094,7 +1096,8 @@ public class YouthHouseImpl implements YouthHouseTemplate,UserService,GuestHouse
 
 //   @Override
 //   public void addGH(GuestHouse gh) throws DMLException{
-//       String query = "INSERT INTO GuestHouse (ghcode, businessnum, name, sido, sigungu, dong, detail_address, host_id) VALUES(?,?,?,?,?,?,?,?)";
+//       String query = "INSERT INTO GuestHouse (ghcode, businessnum, name, sido, sigungu, dong, detail_address, host_id) 
+//    				VALUES(?,?,?,?,?,?,?,?)";
 //
 //       try (Connection conn = getConnect(); PreparedStatement ps = conn.prepareStatement(query)) {
 //
