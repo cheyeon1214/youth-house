@@ -14,8 +14,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+
 import com.project.config.ServerInfo;
 import com.project.dao.YouthHouseTemplate;
+import com.project.dao.UserService;
+import com.project.dao.GuestHouseService;
 import com.project.dto.GuestHouseScore;
 import com.project.dto.RawGHData;
 import com.project.enums.PaymentType;
@@ -32,7 +35,7 @@ import com.project.vo.Reservation;
 import com.project.vo.Review;
 import com.project.vo.Room;
 
-public class YouthHouseImpl implements YouthHouseTemplate {
+public class YouthHouseImpl implements YouthHouseTemplate,UserService,GuestHouseService {
 
    private static YouthHouseImpl yhdao = new YouthHouseImpl();
 
